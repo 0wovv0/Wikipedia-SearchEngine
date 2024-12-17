@@ -1,0 +1,284 @@
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    restart: always
+    ports:
+      - 9870:9870
+      - 9000:9000
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop-network
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    restart: always
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop-network
+
+  datanode2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode2
+    restart: always
+    volumes:
+      - hadoop_datanode2:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop-network
+
+  datanode3:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode3
+    restart: always
+    volumes:
+      - hadoop_datanode3:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop-network
+  
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resourcemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop-network
+
+  nodemanager1:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop-network
+  
+  historyserver:
+    image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
+    container_name: historyserver
+    restart: always
+    environment:
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
+    volumes:
+      - hadoop_historyserver:/hadoop/yarn/timeline
+    env_file:
+      - ./hadoop.env
+    networks:
+      - hadoop-network
+
+  spark-master:
+    build: ./spark-master
+    container_name: spark-master
+    restart: always
+    environment:
+      - SPARK_MODE=master
+      - SPARK_LOG_LEVEL=WARN # Giảm mức log xuống WARN để tránh quá nhiều log không cần thiết
+
+    volumes:
+      - spark-master:/tmp
+      - ./spark-config:/opt/spark/conf
+
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+      - "5000:5000"
+      # - "3000:3000"
+    networks:
+      - hadoop-network
+
+
+  # spark-master-new:
+  #   image: bitnami/spark:latest
+  #   container_name: spark-master-new
+  #   environment:
+  #     - SPARK_MODE=master
+  #     - SPARK_MASTER_HOST=spark-master-new
+  #     - SPARK_MASTER_PORT=7078  # Thay đổi cổng Spark Master
+  #     - SPARK_MASTER_WEBUI_PORT=8081  # Thay đổi cổng UI của Spark Master
+  #     - SPARK_WORKER_WEBUI_PORT=8082  # Thay đổi cổng UI của Spark Worker
+  #     - SPARK_MASTER_REST_ENABLED=true
+  #     - SPARK_MASTER_REST_PORT=6067  # Thay đổi cổng REST API
+  #     - SPARK_LOG_LEVEL=ERROR
+  #   ports:
+  #     - "4041:4040"  # Thay đổi cổng Spark UI
+  #     - "8081:8080"  # Thay đổi cổng UI
+  #     - "6067:6066"  # Thay đổi cổng REST API
+  #     - "7078:7077"  # Thay đổi cổng Master
+  #   networks:
+  #     - hadoop-network
+
+  spark-worker:
+    build: ./spark-workers
+    container_name: spark-worker
+    restart: always
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=4G   # Giới hạn bộ nhớ Worker
+      - SPARK_WORKER_CORES=4     # Số cores tối đa mỗi Worker sử dụng
+      # - SPARK_WORKER_PORT=8081   # Cổng cho giao tiếp Worker
+      # - SPARK_WORKER_WEBUI_PORT=8082
+    volumes:
+      - ./spark-config:/opt/spark/conf
+    depends_on:
+      - spark-master
+    networks:
+      - hadoop-network
+
+  spark-worker2:
+    build: ./spark-workers
+    container_name: spark-worker-2
+    restart: always
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=4G   # Giới hạn bộ nhớ Worker
+      - SPARK_WORKER_CORES=4
+    volumes:
+      - ./spark-config:/opt/spark/conf
+    depends_on:
+      - spark-master
+    networks:
+      - hadoop-network
+
+  spark-worker3:
+    build: ./spark-workers
+    container_name: spark-worker-3
+    restart: always
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=4G   # Giới hạn bộ nhớ Worker
+      - SPARK_WORKER_CORES=2
+    volumes:
+      - ./spark-config:/opt/spark/conf
+    depends_on:
+      - spark-master
+    networks:
+      - hadoop-network
+
+  # Zookeeper service
+  zookeeper:
+    image: zookeeper:3.6
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zookeeper:2888:3888
+    networks:
+      - hadoop-network
+    restart: always
+
+  # HBase Master
+  hbase-master:
+    image: harisekhon/hbase:latest
+    container_name: hbase-master
+    ports:
+      - "16010:16010"  # HBase Web UI
+      - "9090:9090"    # HBase Thrift
+    environment:
+      - HBASE_ROOTDIR=hdfs://namenode:9000/hbase
+      - HBASE_MANAGES_ZK=true
+      - HBASE_ZK_QUORUM=zookeeper
+    networks:
+      - hadoop-network
+    depends_on:
+      - zookeeper
+    restart: always
+    volumes:
+      - hbase-master-data:/hbase-master-data  # Volume cho HBase Master
+
+  # HBase RegionServer 1
+  hbase-regionserver-1:
+    image: harisekhon/hbase:latest
+    container_name: hbase-regionserver-1
+    ports:
+      - "16030:16030"  # HBase RegionServer Web UI
+    environment:
+      - HBASE_MASTER=hbase-master
+      - HBASE_ZK_QUORUM=zookeeper
+    networks:
+      - hadoop-network
+    depends_on:
+      - hbase-master
+      - zookeeper
+    restart: always
+    volumes:
+      - hbase-regionserver-1-data:/hbase-regionserver-data  # Volume cho RegionServer 1
+
+  # HBase RegionServer 2
+  hbase-regionserver-2:
+    image: harisekhon/hbase:latest
+    container_name: hbase-regionserver-2
+    ports:
+      - "16031:16030"  # HBase RegionServer Web UI
+    environment:
+      - HBASE_MASTER=hbase-master
+      - HBASE_ZK_QUORUM=zookeeper
+    networks:
+      - hadoop-network
+    depends_on:
+      - hbase-master
+      - zookeeper
+    restart: always
+    volumes:
+      - hbase-regionserver-2-data:/hbase-regionserver-data  # Volume cho RegionServer 2
+
+  # HBase RegionServer 3
+  hbase-regionserver-3:
+    image: harisekhon/hbase:latest
+    container_name: hbase-regionserver-3
+    ports:
+      - "16032:16030"  # HBase RegionServer Web UI
+    environment:
+      - HBASE_MASTER=hbase-master
+      - HBASE_ZK_QUORUM=zookeeper
+    networks:
+      - hadoop-network
+    depends_on:
+      - hbase-master
+      - zookeeper
+    restart: always
+    volumes:
+      - hbase-regionserver-3-data:/hbase-regionserver-data  # Volume cho RegionServer 3
+  
+volumes:
+  hadoop_namenode:
+  hadoop_datanode:
+  hadoop_datanode2:
+  hadoop_datanode3:
+  hadoop_historyserver:
+  hbase_data:
+  spark-master:
+  hbase-master-data:
+  hbase-regionserver-1-data:
+  hbase-regionserver-2-data:
+  hbase-regionserver-3-data:
+
+networks:
+  hadoop-network:
+    driver: bridge
