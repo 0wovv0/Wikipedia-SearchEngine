@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+  <!-- Cấu hình cụm HBase ở chế độ phân tán -->
+  <property>
+    <name>hbase.cluster.distributed</name>
+    <value>true</value>
+  </property>
+
+  <!-- Thư mục lưu trữ HBase trên HDFS -->
+  <property>
+    <name>hbase.rootdir</name>
+    <value>hdfs://namenode:9000/hbase</value>
+  </property>
+
+  <!-- Cấu hình Zookeeper Quorum -->
+  <property>
+    <name>hbase.zookeeper.quorum</name>
+    <value>zookeeper</value> <!-- Thay bằng hostname hoặc IP của các node Zookeeper -->
+  </property>
+
+  
+
+  <!-- Cổng Zookeeper -->
+  <property>
+    <name>hbase.zookeeper.property.clientPort</name>
+    <value>2181</value>
+  </property>
+
+  <!-- Tăng thời gian timeout để đảm bảo hoạt động ổn định -->
+  <property>
+    <name>zookeeper.session.timeout</name>
+    <value>60000</value>
+  </property>
+
+  <!-- Số kết nối tối đa cho mỗi client -->
+  <property>
+    <name>hbase.zookeeper.property.maxClientCnxns</name>
+    <value>100</value>
+  </property>
+
+  <!-- <property>
+    <name>hbase.master.port</name>
+    <value>16000</value>
+    <description>Port mà HBase Master lắng nghe.</description>
+  </property>
+
+  <property>
+    <name>hbase.master.info.port</name>
+    <value>16010</value>
+    <description>Port cung cấp giao diện quản trị HBase Master.</description>
+  </property> -->
+</configuration>
