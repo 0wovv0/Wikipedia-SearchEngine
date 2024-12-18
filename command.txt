@@ -1,0 +1,36 @@
+docker cp search2.py spark-master:/tmp
+docker exec -it spark-master /spark/bin/spark-submit /tmp/put_index.py
+
+docker exec -it zookeeper /bin/bash
+docker exec -it spark-master /bin/bash
+
+docker exec -it hbase-master /bin/bash
+
+hbase shell
+
+status 'simple'
+
+docker exec -it hbase-regionserver-1 /bin/bash 
+docker exec -it hbase-regionserver-2 /bin/bash
+docker exec -it hbase-regionserver-3 /bin/bash
+
+docker cp hbase-site.xml hbase-master:/hbase/conf
+docker cp hbase-site.xml hbase-regionserver-1:/hbase/conf
+docker cp hbase-site.xml hbase-regionserver-2:/hbase/conf
+docker cp hbase-site.xml hbase-regionserver-3:/hbase/conf
+
+docker cp regionservers hbase-master:/hbase/conf/regionservers
+docker cp regionservers hbase-regionserver-1:/hbase/conf/regionservers
+docker cp regionservers hbase-regionserver-2:/hbase/conf/regionservers
+docker cp regionservers hbase-regionserver-3:/hbase/conf/regionservers
+
+docker cp wiki-dum.xml namenode:/tmp
+docker exec -it namenode hdfs dfs -put /tmp/wiki-dum.xml /user/root/input
+docker cp put_hbase.py spark-master:/tmp
+docker cp my_spark.py spark-master:/tmp
+
+docker exec -it spark-master /spark/bin/spark-submit /tmp/put_hbase.py
+docker exec -it spark-master /spark/bin/spark-submit /tmp/my_spark.py
+
+
+docker exec -it spark-worker /bin/bashpip install happybase
