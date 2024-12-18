@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Query Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .form-container {
+      max-width: 400px;
+      margin: auto;
+    }
+    .form-container label {
+      font-weight: bold;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .form-container textarea {
+      width: 100%;
+      height: 100px;
+      margin-bottom: 15px;
+      padding: 10px;
+      font-size: 14px;
+    }
+    .form-container button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .form-container button:hover {
+      background-color: #0056b3;
+    }
+    .response-container {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>Send Query to Backend</h2>
+    <label for="query">Enter your query:</label>
+    <textarea id="query" placeholder="Example: column1 LIKE '%value%'"></textarea>
+    <button onclick="sendQuery()">Send Query</button>
+    <div class="response-container" id="response">
+      <strong>Response:</strong>
+      <pre id="responseData"></pre>
+    </div>
+  </div>
+
+  <script>
+    async function sendQuery() {
+      const query = document.getElementById('query').value;
+
+      if (!query) {
+        alert("Please enter a query!");
+        return;
+      }
+
+      try {
+        // Gửi request đến Flask/FastAPI backend
+        const response = await fetch("http://localhost:5000/query", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ query: query })
+        });
+
+        // Xử lý phản hồi từ backend
+        if (response.ok) {
+          const responseData = await response.json();
+          document.getElementById("responseData").textContent = JSON.stringify(responseData, null, 2);
+        } else {
+          document.getElementById("responseData").textContent = `Error: ${response.status}`;
+        }
+      } catch (error) {
+        document.getElementById("responseData").textContent = `Error: ${error.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
