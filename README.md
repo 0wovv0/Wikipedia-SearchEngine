@@ -7,3 +7,6 @@ Dự án Wikipedia Search Engine là một công cụ tìm kiếm mạnh mẽ đ
 - Hadoop
 - Hbase
 - React and Flask
+
+
+### Dự án này được lấy cảm hứng từ https://github.com/rushitjasani/Wikipedia-Search-Engine 
